@@ -1,10 +1,6 @@
 <div align="center">
 
-<img src="https://www.st.com/content/dam/PartnerProgram/ultralytics/ultralytics-logotype-original-crop.png" height="45">
-&nbsp;&nbsp;&nbsp;&nbsp;
-<img src="https://images.icon-icons.com/2699/PNG/512/opencv_logo_icon_170888.png" height="65">
-&nbsp;&nbsp;&nbsp;&nbsp;
-<img src="https://static.cdnlogo.com/logos/p/4/python.svg" height="55">
+<img src="assets/image/banner.png" weidht="full" >
 
 # Computer Vision Repository
 
