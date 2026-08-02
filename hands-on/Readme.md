@@ -53,7 +53,7 @@ hands-on/
 |-----------|:------:|
 | Day 1 | Coming Soon |
 | Day 2 | <a href="https://mega.nz/folder/nroQHRJQ#IVanB9dGPg2bhdGDCLLTTA" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/0/06/MegaLink_Logo.png" width="80" alt="MEGA"></a> |
-| Day 3 | Coming Soon |
+| Day 3 | <a href="https://mega.nz/folder/j7RjRSaa#NQ8yjgKMBixYEoGSBeSQ0w" target="_blank"><img src="https://upload.wikimedia.org/wikipedia/commons/0/06/MegaLink_Logo.png" width="80" alt="MEGA"></a> |
 
 ---
 
