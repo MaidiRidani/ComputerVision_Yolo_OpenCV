@@ -18,6 +18,9 @@ This repository serves as the primary hub for my work in the field of Computer V
 Rather than functioning as a single project repository, this repository acts as a centralized knowledge base. It contains technical documentation, implementation notes, and references to standalone Computer Vision projects. As individual projects grow, they may be maintained in dedicated repositories while remaining accessible through this repository as the central index.
 
 ---
+<p align="center">
+  <img src="example.gif" alt="YOLO Demo" width="600">
+</p>
 
 ## Repository Goals
 
