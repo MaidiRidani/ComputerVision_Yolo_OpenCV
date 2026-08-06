@@ -19,7 +19,7 @@ Rather than functioning as a single project repository, this repository acts as 
 
 ---
 <p align="center">
-  <img src="example.gif" alt="YOLO Demo" width="600">
+  <img src="example.gif" alt="YOLO Demo" width="500" >
 </p>
 
 ## Repository Goals
