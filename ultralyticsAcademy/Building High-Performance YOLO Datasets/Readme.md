@@ -8,7 +8,7 @@
 <div align="center"><img src="ban.avif" width="400"></div>
 
 ## Lesson 1 : Start With the Business Objective
-
+<div align="center"><img src="visualsorting.jpeg" width="400"></div>
 ### Hands-On
 
 #### Task
@@ -173,4 +173,143 @@ Menurut saya akan lebih rapi kalau metadata dipisahkan menjadi dua file.
 
 Pemisahan seperti ini menurut saya membuat alur proyek lebih jelas karena metadata untuk training dan metadata untuk evaluasi memiliki tujuan yang berbeda.
 
+
+
+
+## Lesson 4 : Annotation Best Practices
+
+### Hands-On
+
+## Try It
+Write the labeling guide for your project  one paragraph per class, plus your occlusion rule and your ambiguous-case log. Hand 20 images to two people independently. Count disagreements. Each disagreement is a guide entry.
+### Design Note
+
+Setelah membaca lesson ini aku baru kepikiran satu hal yang cukup penting. Awalnya aku mengira proses pengambilan gambar bisa langsung dilakukan di area tambang saat ore masih baru diambil. Tapi setelah dipikir lagi, sepertinya itu akan jadi masalah.
+
+Ore yang baru keluar dari tambang biasanya masih bercampur tanah, lumpur, dan material lain. Kalau kondisinya seperti itu, kamera RGB biasa kemungkinan besar tidak akan bisa membedakan kualitas ore hanya dari tampilannya. Walaupun setiap sampel nantinya sudah memiliki label berdasarkan hasil identifikasi geologist atau uji laboratorium, informasi tersebut belum tentu terlihat pada citra RGB.
+
+Karena itu, untuk simulasi proyek ini aku mengasumsikan proses pengambilan gambar dilakukan **setelah washing atau screening**, ketika permukaan batu sudah lebih bersih sehingga karakteristik visualnya lebih mudah diamati. Penentuan kelas tetap berasal dari **Sample ID** yang diberikan oleh geologist sebagai **ground truth**, bukan berdasarkan penilaian annotator.
+
+Selain itu, setelah membandingkan antara **Object Detection** dan **Instance Segmentation**, menurutku Instance Segmentation lebih cocok untuk kasus ini.
+
+Kalau cuma pakai bounding box, sebagian area di dalam box masih berisi background seperti conveyor, bayangan, atau bahkan batu lain yang berhimpitan. Sedangkan yang ingin dipelajari model sebenarnya adalah karakteristik batu itu sendiri.
+
+Dengan Instance Segmentation, setiap batu memiliki **instance mask** yang mengikuti bentuk aslinya. Harapannya model bisa lebih fokus mempelajari tekstur permukaan, warna, pola mineral, maupun retakan yang ada pada batu tanpa terlalu terpengaruh background.
+
+Jadi untuk sementara workflow yang aku bayangkan seperti ini.
+
+```text
+Geologist
+      │
+      ▼
+Menentukan kualitas batu
+      │
+      ▼
+Memberikan Sample ID
+      │
+      ▼
+Pengambilan gambar setelah washing
+      │
+      ▼
+Polygon Annotation (Instance Segmentation)
+      │
+      ▼
+YOLO Instance Segmentation
+      │
+      ▼
+Deteksi setiap batu
++
+Klasifikasi kualitas batu
+```
+
+
+## Labeling Guide
+
+### High-grade Ore
+
+Semua batu yang memiliki **Sample ID** kategori **High-grade Ore** diberi label `High-grade Ore`. Polygon mengikuti kontur luar batu seakurat mungkin tanpa memasukkan conveyor, bayangan, ataupun batu lain di sekitarnya.
+
+
+
+### Medium-grade Ore
+
+Semua batu yang memiliki **Sample ID** kategori **Medium-grade Ore** diberi label `Medium-grade Ore`. Setiap batu hanya memiliki satu polygon yang mengikuti bentuk aslinya.
+
+
+### Low-grade Ore
+
+Semua batu yang memiliki **Sample ID** kategori **Low-grade Ore** diberi label `Low-grade Ore`. Polygon dibuat mengikuti batas luar batu dan tidak digabung dengan batu lain walaupun posisinya berdekatan.
+
+
+### Waste Rock
+
+Semua batu yang memiliki **Sample ID** kategori **Waste Rock** diberi label `Waste Rock`. Setiap batu dianotasi sebagai satu instance yang terpisah.
+
+
+## Polygon Annotation Rules
+
+Supaya hasil anotasi tetap konsisten, sementara aku menggunakan beberapa aturan berikut.
+
+1. Setiap batu hanya memiliki **satu polygon annotation**.
+2. Polygon mengikuti kontur luar batu sedekat mungkin.
+3. Conveyor, bayangan, lumpur di luar batu, atau background lain tidak boleh ikut masuk ke polygon.
+4. Dua batu yang saling menempel tetap dibuat menjadi dua instance apabila batas antar batu masih terlihat.
+5. Batu yang terpotong frame tetap dianotasi apabila sekitar **50% atau lebih** bagian batu masih terlihat.
+6. Polygon harus tertutup dengan benar (*closed polygon*) dan tidak boleh saling berpotongan (*self intersection*).
+
+
+## Occlusion Rule
+
+Kalau sekitar **50% atau lebih** permukaan batu masih terlihat dan bentuknya masih bisa dikenali, batu tetap dianotasi.
+
+Kalau sebagian besar batu sudah tertutup batu lain sampai bentuknya sulit dikenali, sementara aku memilih untuk **tidak dianotasi** dan dimasukkan ke daftar **review**.
+
+Angka **50%** ini masih berupa asumsi awal. Nanti kalau sudah benar-benar mencoba di lapangan mungkin saja perlu disesuaikan lagi.
+
+
+
+## Ambiguous Case Log
+
+Karena kemungkinan bakal banyak kasus yang belum kepikiran sekarang, setiap kasus yang membingungkan akan dicatat supaya Labeling Guide bisa terus diperbaiki.
+
+| Kasus | Keputusan |
+|-------|-----------|
+| Batu masih ada sedikit lumpur setelah washing | Tetap dianotasi selama kontur batu masih jelas. |
+| Batu basah sehingga warna terlihat lebih gelap | Tetap mengikuti Sample ID dari geologist. |
+| Dua batu saling berhimpitan | Dibuat dua polygon selama batas antar batu masih terlihat. |
+| Sebagian batu keluar frame | Tetap dianotasi apabila sekitar 50% atau lebih objek masih terlihat. |
+| Batu pecah menjadi dua bagian | Untuk sementara dianggap dua instance apabila memang sudah terpisah secara fisik. |
+| Gambar blur atau tidak fokus | Masuk ke review dulu. Bisa dipakai sebagai edge case kalau memang diperlukan. |
+| Kontur batu kurang jelas karena pencahayaan | Didiskusikan lagi sebelum dianotasi. |
+
+
+## Label Consistency Test
+
+Karena ini masih tahap perencanaan, aku mencoba mensimulasikan proses kalibrasi annotator.
+
+Sebanyak **20 gambar** diberikan ke **dua annotator** secara independen.
+
+Karena kelas setiap batu sudah ditentukan melalui **Sample ID**, kemungkinan perbedaan kelas harusnya kecil. Jadi fokus pengecekannya lebih ke apakah kedua annotator menggambar polygon dengan cara yang sama.
+
+| Hasil | Jumlah |
+|------|-------:|
+| Total gambar | 20 |
+| Anotasi konsisten | 18 |
+| Disagreement | 2 |
+
+Dari simulasi ini aku menganggap dua disagreement terjadi karena batu saling berhimpitan dan ada beberapa batu yang sebagian tertutup.
+
+Kasus seperti ini nantinya langsung dimasukkan ke **Ambiguous Case Log**, lalu aturan anotasinya diperjelas sebelum proses labeling dalam jumlah besar dimulai.
+
+
+
+## Kesimpulan
+
+Menurutku Labeling Guide ini bukan cuma soal memberi aturan menggambar polygon, tapi juga supaya semua annotator punya cara pandang yang sama ketika melakukan anotasi.
+
+Dengan memisahkan proses **penentuan kelas** (oleh geologist melalui Sample ID) dan **proses anotasi** (oleh annotator), subjektivitas saat labeling bisa dikurangi. Setiap disagreement nantinya bukan dianggap sebagai kesalahan annotator, tapi justru menjadi masukan untuk memperbaiki Labeling Guide agar dataset semakin konsisten.
+
+> **Catatan pribadi**
+>
+> Masih ada satu hal yang menurutku perlu dipikirkan lagi di tahap berikutnya, yaitu bagaimana menjaga **Sample ID** tetap melekat pada batu yang sama setelah proses washing atau screening. Karena kalau identitas batu sampai tertukar, maka ground truth yang sudah diberikan geologist juga ikut menjadi tidak valid. Menurutku ini layak dijadikan Design Note tersendiri saat membahas workflow pengumpulan dataset.
 
